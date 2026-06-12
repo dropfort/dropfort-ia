@@ -824,11 +824,6 @@ dom.upload.yearInput.addEventListener('change', (e) => {
   state.selectedYear = parseInt(e.target.value) || getCurrentYear();
 });
 
-// File upload - click on drop zone
-dom.upload.dropZone.addEventListener('click', () => {
-  dom.upload.fileInput.click();
-});
-
 // File upload - file selected
 dom.upload.fileInput.addEventListener('change', (e) => {
   if (e.target.files.length > 0) {
