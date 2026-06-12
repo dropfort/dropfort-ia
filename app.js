@@ -393,28 +393,29 @@ async function extractValueFromPDF(file) {
 }
 
 function findBRLValue(text) {
-  const patterns = [
-    /(?:total\s*a\s*pagar|total|valor\s*do\s*documento|valor\s*por\s*parcela|valor\s*a\s*pagar|valor|vencimento)[:\s]*R?\$?\s*([\d.]+,\d{2})/gi,
-    /R\$\s*([\d.]+,\d{2})/g,
-    /([\d]{1,3}(?:\.\d{3})*,\d{2})/g,
-    /(\d+,\d{2})/g,
-  ];
+  const candidates = [];
 
-  for (const pattern of patterns) {
+  const extract = (pattern) => {
     const matches = [...text.matchAll(pattern)];
-    if (matches.length > 0) {
-      const candidates = matches
-        .map(m => {
-          const val = m[1] || m[0];
-          return parseBRL(val);
-        })
-        .filter(v => v !== null && v > 0);
+    matches.forEach(m => {
+      const raw = m[1] || m[0];
+      const val = parseBRL(raw);
+      if (val !== null && val > 0) candidates.push(val);
+    });
+  };
 
-      if (candidates.length > 0) {
-        candidates.sort((a, b) => b - a);
-        return candidates[0];
-      }
-    }
+  // 1. Label (total/valor) + R$ + number (decimals optional)
+  extract(/(?:total\s*a\s*pagar|total|valor\s*do\s*documento|valor\s*por\s*parcela|valor\s*a\s*pagar|valor|vencimento)[:\s]*R?\$?\s*([\d.]+(?:,\d{2})?)/gi);
+  // 2. R$ + number (decimals optional)
+  extract(/R\$\s*([\d.]+(?:,\d{2})?)/g);
+  // 3. BRL with dots as thousand sep and comma as decimal
+  extract(/([\d]{1,3}(?:\.\d{3})*,\d{2})/g);
+  // 4. Simple decimal fallback
+  extract(/(\d+,\d{2})/g);
+
+  if (candidates.length > 0) {
+    candidates.sort((a, b) => b - a);
+    return candidates[0];
   }
   return null;
 }
