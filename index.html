@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dropfort IA - Comprovantes de Pagamento</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="supabase-config.js"></script>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ==================== LOGIN SCREEN ==================== -->
+  <div id="loginScreen" class="screen active">
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="logo-icon">
+            <i class="fas fa-receipt"></i>
+          </div>
+          <h1>Dropfort IA</h1>
+          <p>Sistema de Comprovantes de Pagamento</p>
+        </div>
+
+        <div id="loginError" class="login-error"></div>
+
+        <!-- User Login -->
+        <div id="userLoginForm">
+          <div class="form-group">
+            <label><i class="fas fa-user"></i> Seu Nome</label>
+            <input type="text" id="nameInput" class="form-input" placeholder="Digite seu nome..." autocomplete="off" />
+          </div>
+          <button id="loginBtn" class="btn-primary btn-full">Entrar</button>
+        </div>
+
+        <!-- Admin Login -->
+        <div id="adminLoginForm" style="display:none">
+          <div class="form-group">
+            <label><i class="fas fa-lock"></i> Senha do Administrador</label>
+            <input type="password" id="adminPasswordInput" class="form-input" placeholder="Digite a senha..." />
+          </div>
+          <button id="adminLoginBtn" class="btn-primary btn-full">Acessar como Administrador</button>
+          <button id="backToUserBtn" class="btn-link" style="margin-top:12px;width:100%;text-align:center;">Voltar para login de usuário</button>
+        </div>
+
+        <div class="login-footer">
+          <a id="toggleAdminLink">Acesso do Administrador</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== DASHBOARD ==================== -->
+  <div id="dashboard" class="screen">
+
+    <!-- Top Header -->
+    <header class="dashboard-header">
+      <div class="header-left">
+        <h2><i class="fas fa-receipt"></i> Dropfort IA</h2>
+      </div>
+      <div class="header-right">
+        <span id="userBadge" class="user-badge">
+          <span class="avatar" id="userAvatar"></span>
+          <span id="userNameDisplay"></span>
+        </span>
+        <button id="adminToggleBtn" class="btn-small btn-outline" title="Modo Administrador">
+          <i class="fas fa-shield-alt"></i> <span>Admin</span>
+        </button>
+        <button id="logoutBtn" class="btn-small btn-outline" title="Sair">
+          <i class="fas fa-sign-out-alt"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="dashboard-content">
+
+      <!-- Upload Section -->
+      <section class="card upload-card">
+        <h3><i class="fas fa-plus-circle"></i> Novo Comprovante</h3>
+
+        <div class="upload-flow">
+
+          <!-- Steps Indicator -->
+          <div class="steps">
+            <div class="step active" data-step="1">1. Login</div>
+            <div class="step" data-step="2">2. Mês</div>
+            <div class="step" data-step="3">3. PDF</div>
+            <div class="step" data-step="4">4. Valor</div>
+          </div>
+
+          <!-- Month Selector -->
+          <div class="form-group">
+            <label><i class="fas fa-calendar-alt"></i> Mês de Referência</label>
+            <div class="month-year-row">
+              <select id="monthSelect" class="form-select">
+                <option value="0">Janeiro</option>
+                <option value="1">Fevereiro</option>
+                <option value="2">Março</option>
+                <option value="3">Abril</option>
+                <option value="4">Maio</option>
+                <option value="5">Junho</option>
+                <option value="6">Julho</option>
+                <option value="7">Agosto</option>
+                <option value="8">Setembro</option>
+                <option value="9">Outubro</option>
+                <option value="10">Novembro</option>
+                <option value="11">Dezembro</option>
+              </select>
+              <input type="number" id="yearInput" class="form-input year-input" min="2020" max="2030" />
+            </div>
+          </div>
+
+          <!-- File Upload - Drop Zone -->
+          <div class="form-group">
+            <label><i class="fas fa-file-pdf"></i> Comprovante (PDF)</label>
+            <div class="drop-zone" id="dropZone">
+              <div class="drop-zone-content">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Arraste o PDF aqui ou <span class="link">clique para selecionar</span></p>
+                <span class="hint">Formatos aceitos: .pdf</span>
+              </div>
+              <input type="file" id="fileInput" accept=".pdf" />
+            </div>
+            <div id="fileInfo" class="file-info" style="display:none">
+              <i class="fas fa-file-pdf"></i>
+              <span id="fileName"></span>
+              <button id="removeFileBtn" class="btn-icon"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+
+          <!-- Extracted Value / Manual Input -->
+          <div id="valueSection" class="form-group" style="display:none">
+            <label><i class="fas fa-dollar-sign"></i> Valor</label>
+
+            <div id="extractedValueDisplay" class="value-display">
+              <span class="value-label">Valor extraído do PDF:</span>
+              <span id="extractedValue" class="value-amount"></span>
+              <button id="confirmValueBtn" class="btn-small btn-primary">Confirmar</button>
+              <button id="editValueBtn" class="btn-small btn-outline">Corrigir</button>
+            </div>
+
+            <div id="manualValueInput" class="manual-input" style="display:none">
+              <span class="value-label">Digite o valor manualmente:</span>
+              <div class="manual-row">
+                <span class="currency-symbol">R$</span>
+                <input type="text" id="manualValue" class="form-input" placeholder="0,00" />
+                <button id="manualConfirmBtn" class="btn-small btn-primary">OK</button>
+              </div>
+              <span class="hint">Use o formato brasileiro: 1.500,00 ou 1500,00</span>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button id="submitBtn" class="btn-primary btn-full" disabled>
+            <i class="fas fa-check"></i> Adicionar Pagamento
+          </button>
+
+          <!-- Upload Status -->
+          <div id="uploadStatus" style="display:none"></div>
+        </div>
+      </section>
+
+      <!-- Table Section -->
+      <section class="card table-card">
+        <div class="table-header">
+          <h3><i class="fas fa-table"></i> Comprovantes</h3>
+          <div class="table-controls">
+            <select id="tableYearSelect" class="form-select"></select>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table id="paymentsTable">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Jan</th>
+                <th>Fev</th>
+                <th>Mar</th>
+                <th>Abr</th>
+                <th>Mai</th>
+                <th>Jun</th>
+                <th>Jul</th>
+                <th>Ago</th>
+                <th>Set</th>
+                <th>Out</th>
+                <th>Nov</th>
+                <th>Dez</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+          <div id="emptyState" class="empty-state show">
+            <i class="fas fa-inbox"></i>
+            <p>Nenhum comprovante encontrado para este ano</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ==================== PDF VIEWER MODAL ==================== -->
+  <div id="pdfModal" class="modal">
+    <div class="modal-backdrop" onclick="closePdfModal()"></div>
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h3><i class="fas fa-file-pdf" style="color:var(--danger)"></i> Comprovante</h3>
+        <button class="btn-icon" onclick="closePdfModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <iframe id="pdfViewer" src="" title="Visualizador de PDF"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== EDIT MODAL ==================== -->
+  <div id="editModal" class="modal">
+    <div class="modal-backdrop" onclick="closeEditModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-edit"></i> Editar Valor</h3>
+        <button class="btn-icon" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Valor (R$)</label>
+          <div class="manual-row">
+            <span class="currency-symbol">R$</span>
+            <input type="text" id="editValueInput" class="form-input" placeholder="0,00" />
+          </div>
+          <span class="hint">Formato: 1500,00 ou 1.500,00</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button id="editConfirmBtn" class="btn-primary" style="flex:1">Salvar</button>
+          <button id="editCancelBtn" class="btn-small btn-outline" style="flex:1" onclick="closeEditModal()">Cancelar</button>
+        </div>
+        <div id="editError" class="login-error mt-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== DELETE CONFIRM MODAL ==================== -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-backdrop" onclick="closeDeleteModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-trash-alt text-danger"></i> Confirmar Exclusão</h3>
+        <button class="btn-icon" onclick="closeDeleteModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom:16px;font-size:14px;color:var(--gray-600);">
+          Tem certeza que deseja excluir este comprovante? Esta ação não pode ser desfeita.
+        </p>
+        <div style="display:flex;gap:8px;">
+          <button id="deleteConfirmBtn" class="btn-primary btn-danger" style="flex:1">Sim, Excluir</button>
+          <button class="btn-small btn-outline" style="flex:1" onclick="closeDeleteModal()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== APP SCRIPT ==================== -->
+<script defer src="app.js"></script>
+</body>
+</html>
