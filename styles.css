@@ -1011,3 +1011,47 @@ td .cell-actions {
 .mb-4 {
   margin-bottom: 16px;
 }
+
+/* ============ MONTH GRID ============ */
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.month-card {
+  padding: 14px 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-700);
+  background: var(--gray-50);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+  user-select: none;
+}
+
+.month-card:hover {
+  border-color: var(--primary-light);
+  background: var(--primary-bg);
+}
+
+.month-card.selected {
+  border-color: var(--primary);
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--primary);
+  font-weight: 600;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+@media (max-width: 480px) {
+  .month-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .month-card {
+    padding: 12px 6px;
+    font-size: 12px;
+  }
+}

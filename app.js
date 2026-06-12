@@ -26,6 +26,7 @@ if (typeof pdfjsLib !== 'undefined') {
 const state = {
   currentUser: null,
   isAdmin: false,
+  monthConfirmed: false,
   selectedMonth: new Date().getMonth(),
   selectedYear: new Date().getFullYear(),
   uploadedFile: null,
@@ -101,6 +102,10 @@ const dom = {
     yearSelect: $('tableYearSelect'),
   },
   modals: {
+    month: $('monthModal'),
+    monthGrid: $('monthGrid'),
+    monthYear: $('monthModalYear'),
+    monthConfirmBtn: $('confirmMonthBtn'),
     pdf: $('pdfModal'),
     pdfViewer: $('pdfViewer'),
     edit: $('editModal'),
@@ -198,6 +203,7 @@ function updateSteps() {
 
   let current = 1;
   if (state.currentUser) current = 2;
+  if (state.monthConfirmed) current = 3;
   if (state.uploadedFile) current = 3;
   if (state.confirmedValue !== null) current = 4;
 
@@ -254,8 +260,10 @@ function handleAdminLogin() {
 }
 
 function handleLogout() {
+  dom.modals.month.classList.remove('show');
   state.currentUser = null;
   state.isAdmin = false;
+  state.monthConfirmed = false;
   state.uploadedFile = null;
   state.uploadedFileUrl = null;
   state.extractedValue = null;
@@ -294,13 +302,16 @@ function enterDashboard() {
       dom.dashboard.adminToggleBtn.style.color = '';
     }
 
-    state.selectedMonth = getCurrentMonth();
+    state.monthConfirmed = false;
+  state.selectedMonth = getCurrentMonth();
   state.selectedYear = getCurrentYear();
   dom.upload.monthSelect.value = state.selectedMonth;
   dom.upload.yearInput.value = state.selectedYear;
 
   updateSteps();
+  resetUploadUI();
   loadData();
+  showMonthModal();
 }
 
 function toggleAdminLoginMode() {
@@ -754,6 +765,35 @@ function escapeHtml(text) {
 // MODALS
 // =============================================
 
+function showMonthModal() {
+  const cards = dom.modals.monthGrid.querySelectorAll('.month-card');
+  cards.forEach(c => c.classList.remove('selected'));
+  cards.forEach(c => {
+    if (parseInt(c.dataset.month) === state.selectedMonth) {
+      c.classList.add('selected');
+    }
+  });
+  dom.modals.monthYear.value = state.selectedYear;
+  dom.modals.month.classList.add('show');
+}
+
+function confirmMonth() {
+  const selected = dom.modals.monthGrid.querySelector('.month-card.selected');
+  if (!selected) {
+    showStatus('Selecione um mês antes de confirmar.', 'error');
+    return;
+  }
+  state.selectedMonth = parseInt(selected.dataset.month);
+  state.selectedYear = parseInt(dom.modals.monthYear.value) || getCurrentYear();
+  state.monthConfirmed = true;
+
+  dom.upload.monthSelect.value = state.selectedMonth;
+  dom.upload.yearInput.value = state.selectedYear;
+
+  dom.modals.month.classList.remove('show');
+  updateSteps();
+}
+
 function viewPDF(url) {
   if (!url) return;
   dom.modals.pdfViewer.src = url;
@@ -817,7 +857,19 @@ dom.login.toggleAdminLink.addEventListener('click', toggleAdminLoginMode);
 // Logout
 dom.dashboard.logoutBtn.addEventListener('click', handleLogout);
 
-// Month/Year
+// Month modal
+dom.modals.monthGrid.addEventListener('click', (e) => {
+  const card = e.target.closest('.month-card');
+  if (!card) return;
+  dom.modals.monthGrid.querySelectorAll('.month-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+});
+dom.modals.monthConfirmBtn.addEventListener('click', confirmMonth);
+dom.modals.monthYear.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') confirmMonth();
+});
+
+// Month/Year dashboard (re-confirm on change)
 dom.upload.monthSelect.addEventListener('change', (e) => {
   state.selectedMonth = parseInt(e.target.value);
 });

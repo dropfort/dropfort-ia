@@ -210,6 +210,42 @@
     </div>
   </div>
 
+  <!-- ==================== MONTH SELECTION MODAL ==================== -->
+  <div id="monthModal" class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" style="max-width:520px">
+      <div class="modal-header">
+        <h3><i class="fas fa-calendar-alt" style="color:var(--primary)"></i> Selecionar Mês</h3>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:14px;color:var(--gray-600);margin-bottom:16px;">
+          Escolha o mês de referência para o comprovante:
+        </p>
+        <div class="month-grid" id="monthGrid">
+          <div class="month-card" data-month="0">Janeiro</div>
+          <div class="month-card" data-month="1">Fevereiro</div>
+          <div class="month-card" data-month="2">Março</div>
+          <div class="month-card" data-month="3">Abril</div>
+          <div class="month-card" data-month="4">Maio</div>
+          <div class="month-card" data-month="5">Junho</div>
+          <div class="month-card" data-month="6">Julho</div>
+          <div class="month-card" data-month="7">Agosto</div>
+          <div class="month-card" data-month="8">Setembro</div>
+          <div class="month-card" data-month="9">Outubro</div>
+          <div class="month-card" data-month="10">Novembro</div>
+          <div class="month-card" data-month="11">Dezembro</div>
+        </div>
+        <div class="form-group" style="margin-top:16px">
+          <label>Ano</label>
+          <input type="number" id="monthModalYear" class="form-input" min="2020" max="2030" style="max-width:140px" />
+        </div>
+        <button id="confirmMonthBtn" class="btn-primary btn-full">
+          <i class="fas fa-check"></i> Confirmar Mês
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== PDF VIEWER MODAL ==================== -->
   <div id="pdfModal" class="modal">
     <div class="modal-backdrop" onclick="closePdfModal()"></div>
